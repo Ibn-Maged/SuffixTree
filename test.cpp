@@ -155,15 +155,13 @@ public:
                 if(minIndex==-1){
                     minIndex= ::strlen(str) ;
                 }
-                for(int i = currentChild->key.startIndex; i < min(minIndex, (int)strlen(subString));i++){
+                for(int i = currentChild->key.startIndex; i < minIndex && currentIndex < strlen(subString);i++, currentIndex++){
                     if(str[i]!= subString[currentIndex]){
                         cout<<"Not Found"<<endl;
                         return;
-                    }else{
                     }
-                        currentIndex++;
                 }
-                 if(currentIndex>= ::strlen(subString)){
+                 if(currentIndex == strlen(subString)){
                     dfs(&currentChild->key);
                     return;
                 }else{
@@ -173,7 +171,7 @@ public:
                 currentChild = currentChild->next;
             }
         }
-            cout<<"not found"<<endl;
+        cout<<"not found"<<endl;
     }
     void print(int start,int end){
         for(int i=start;i<end;i++){
@@ -187,5 +185,5 @@ int main(){
     char s[] = "bananabanaba$";
     SuffixTree t = SuffixTree(s);
 //    t.dfs(t.root);
-    t.search("ana");
+    t.search("nabx");
 }
