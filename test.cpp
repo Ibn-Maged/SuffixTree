@@ -129,18 +129,51 @@ public:
     }
 
     void dfs(SuffixTreeNode* node){
+        if(node->suffixID>-1){
+            cout<<node->suffixID<<" ";
+        }
         if(node->children->isEmpty()){
-            print(node->startIndex,strlen(str));
+
             return;
         }
         else{
             LinkedListNode* current= node->children->getHead();
-            print(node->startIndex,node->children->getMinIndex());
+
             while(current!=nullptr){
+
                 dfs(&current->key);
                 current=current->next;
             }
         }
+    }
+    void search(char subString[]){
+        LinkedListNode* currentChild = root->children->getHead();
+        int currentIndex=0;
+        while(currentChild!= nullptr){
+            if(str[currentChild->key.startIndex]== subString[currentIndex]){
+                int minIndex=currentChild->key.children->getMinIndex();
+                if(minIndex==-1){
+                    minIndex= ::strlen(str) ;
+                }
+                for(int i = currentChild->key.startIndex; i < min(minIndex, (int)strlen(subString));i++){
+                    if(str[i]!= subString[currentIndex]){
+                        cout<<"Not Found"<<endl;
+                        return;
+                    }else{
+                    }
+                        currentIndex++;
+                }
+                 if(currentIndex>= ::strlen(subString)){
+                    dfs(&currentChild->key);
+                    return;
+                }else{
+                    currentChild=currentChild->key.children->getHead();
+                }
+            } else {
+                currentChild = currentChild->next;
+            }
+        }
+            cout<<"not found"<<endl;
     }
     void print(int start,int end){
         for(int i=start;i<end;i++){
@@ -153,5 +186,6 @@ public:
 int main(){
     char s[] = "bananabanaba$";
     SuffixTree t = SuffixTree(s);
-    t.dfs(t.root);
+//    t.dfs(t.root);
+    t.search("ana");
 }
