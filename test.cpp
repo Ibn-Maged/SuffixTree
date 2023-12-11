@@ -62,7 +62,7 @@ public:
         }
         else
         {
-            LinkedListNode* current=head->next;
+            LinkedListNode* current = head->next;
             int min=INT_MAX;
             while(current!= nullptr)
             {
@@ -116,7 +116,9 @@ public:
                     {
                         minIndex= strlen(str) ;
                     }
-                    for(int i = currentChild->key.startIndex,j=newSuffix->startIndex; i < minIndex;i++,j++)
+                    int i = currentChild->key.startIndex;
+                    int j = newSuffix->startIndex;
+                    while(i < minIndex)
                     {
                         if(!isEqual(i,j))
                         {
@@ -128,6 +130,8 @@ public:
                         {
                             newSuffix->startIndex++;
                         }
+                        i++;
+                        j++;
                     }
                     insert(&currentChild->key,newSuffix);
                     return;
@@ -190,20 +194,22 @@ public:
         int currentIndex=0;
         while(currentChild!= nullptr)
         {
-            if(str[currentChild->key.startIndex]== subString[currentIndex])
+            if(str[currentChild->key.startIndex] == subString[currentIndex])
             {
-                int minIndex=currentChild->key.children->getMinIndex();
+                int minIndex = currentChild->key.children->getMinIndex();
                 if(minIndex==-1)
                 {
                     minIndex= strlen(str) ;
                 }
-                for(int i = currentChild->key.startIndex; i < minIndex && currentIndex < strlen(subString);i++, currentIndex++)
+                for(int i = currentChild->key.startIndex; i < minIndex;i++)
                 {
+                    if(currentIndex == strlen(subString)) break;
                     if(str[i]!= subString[currentIndex])
                     {
                         cout<<"Not Found"<<endl;
                         return;
                     }
+                    currentIndex++;
                 }
                 if(currentIndex == strlen(subString))
                 {
