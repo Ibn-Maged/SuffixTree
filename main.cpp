@@ -7,133 +7,235 @@ using namespace std;
 
 class LinkedList;
 
-struct SuffixTreeNode{
+struct SuffixTreeNode
+{
     int suffixID;
     int startIndex;
     LinkedList* children;
 };
 
-struct LinkedListNode{
+struct LinkedListNode
+{
     LinkedListNode* next;
     SuffixTreeNode key;
-    LinkedListNode(){
+    LinkedListNode(SuffixTreeNode key)
+    {
+        next = nullptr;
+        this->key=key;
+    }
+    LinkedListNode()
+    {
         next = nullptr;
     }
 };
 
-class LinkedList{
-    LinkedListNode* head = new LinkedListNode;
+class LinkedList
+{
+    LinkedListNode* head = new LinkedListNode();
 public:
-    void insert(LinkedListNode* node){
+    void insert(LinkedListNode* node)
+    {
         LinkedListNode* current = head;
         node->next = nullptr;
-        while(current->next != nullptr){
+        while(current->next != nullptr)
+        {
             current = current->next;
         }
         current->next = node;
         current = nullptr;
         delete current;
     }
-    bool isEmpty(){
+    bool isEmpty()
+    {
+        return head->next == nullptr;
+    }
+    LinkedListNode* getHead()
+    {
         return head->next;
     }
-    LinkedListNode* getHead(){
-        return head->next;
+
+    int getMinIndex()
+    {
+        if(isEmpty())
+        {
+            return -1;
+        }
+        else
+        {
+            LinkedListNode* current=head->next;
+            int min=INT_MAX;
+            while(current!= nullptr)
+            {
+                if(current->key.startIndex<min)
+                {
+                    min=current->key.startIndex;
+                }
+                current = current->next;
+            }
+            return min;
+        }
     }
 };
 
-class SuffixTree{
-    SuffixTreeNode* root = new SuffixTreeNode;
+class SuffixTree
+{
     char* str;
 public:
-    SuffixTree(char str[]){
+    SuffixTreeNode* root = new SuffixTreeNode;
+    SuffixTree(char str[])
+    {
         SuffixTreeNode* node;
         root->startIndex = -1;
         root->suffixID = -1;
         root->children = new LinkedList;
         this->str = str;
-        for(int i = 0; i < strlen(str); i++){
+        for(int i = 0; i < strlen(str); i++)
+        {
             node = new SuffixTreeNode();
             node->startIndex = i;
-            insert(node, root);
+            node->suffixID=i;
+            node->children=new LinkedList;
+            insert(root,node);
         }
     }
-    void insert(SuffixTreeNode* node, SuffixTreeNode* startNode){
-        LinkedListNode* current = startNode->children->getHead();
-        if(current != nullptr){
-            while(current != nullptr){
-                int index = current->key.startIndex;
-                if(isEqual(node->startIndex,index)){
-                    current=current->next;
-                    if(current->key.children->isEmpty()){
-
-                    }else{
-                        int min=0;
-                        //getting min index
-                        while(current->next!=nullptr){
-                            if(current->key.startIndex<min){
-                                min=current->key.startIndex;
-                            }
+    void insert(SuffixTreeNode* currentNode,SuffixTreeNode* newSuffix)
+    {
+        if(currentNode->children->isEmpty())
+        {
+            currentNode->children->insert(new LinkedListNode(*newSuffix));
+        }
+        else
+        {
+            LinkedListNode* currentChild = currentNode->children->getHead();
+            while(currentChild!= nullptr)
+            {
+                if(isEqual(currentChild->key.startIndex, newSuffix->startIndex))
+                {
+                    int minIndex=currentChild->key.children->getMinIndex();
+                    if(minIndex==-1)
+                    {
+                        minIndex= strlen(str) ;
+                    }
+                    for(int i = currentChild->key.startIndex,j=newSuffix->startIndex; i < minIndex;i++,j++)
+                    {
+                        if(!isEqual(i,j))
+                        {
+                            newSuffix->startIndex=j;
+                            split(currentChild,new LinkedListNode(*newSuffix),i);
+                            return;
                         }
-                        int newStartIndex=node->startIndex;
-                        bool splitted=false;
-                        for(int i=index;i<min;i++){
-                            if(str[i]!=str[newStartIndex]){
-                                split(startNode,node,newStartIndex+i,startNode->startIndex+i);
-                                splitted=true;
-                                break;
-                            }
-                            newStartIndex++;
-                        }
-                        if(!splitted){
-                            SuffixTreeNode strt=current->key;
-                            insert(node,&strt);
+                        else
+                        {
+                            newSuffix->startIndex++;
                         }
                     }
-                } else {
-                    current = current->next;
+                    insert(&currentChild->key,newSuffix);
+                    return;
+                }
+                else
+                {
+                    currentChild = currentChild->next;
                 }
             }
-        } else {
-            LinkedListNode* newNode = new LinkedListNode;
-            newNode->key = *node;
-            startNode->children->insert(newNode);
+            currentNode->children->insert(new LinkedListNode(*newSuffix));
         }
     }
-    void split(SuffixTreeNode* startNode ,SuffixTreeNode*newNode,int index1 ,int index2){
-        SuffixTreeNode* node = new SuffixTreeNode();
-        node->startIndex=index2;
-        node->children=startNode->children;
-        startNode->children=nullptr;
-        startNode->children=new LinkedList();
-        LinkedListNode* child = new LinkedListNode();
-        child->key = *node;
-        startNode->children->insert(child);
-        newNode->startIndex=index1;
-        child = new LinkedListNode();
-        child->key= *newNode;
-        startNode->children->insert(child);
-    }
-    bool isEqual(int index1,int index2){
-        if(str[index1]==str[index2]){
-            return true;
-        }else{
-            return false;
+    void split(LinkedListNode* current,LinkedListNode* newNode,int subNodeStartIndex)
+    {
+        SuffixTreeNode currentSub=SuffixTreeNode();
+        currentSub.children=current->key.children;
+        currentSub.startIndex=subNodeStartIndex;
+        if(currentSub.children->isEmpty())
+        {
+            currentSub.suffixID=current->key.suffixID;
         }
-    }
-    void search(char sequence[]){
+        else
+        {
+            currentSub.suffixID = -1;
+        }
+        current->key.suffixID=-1;
+        current->key.children= new LinkedList();
+        current->key.children->insert(newNode);
+        current->key.children->insert(new LinkedListNode(currentSub));
 
     }
-    // void traverse(){
-    //     LinkedList currentChildren = *(root->children);
-    //     LinkedListNode* current = currentChildren.getHead();
-    //     while(current->next != nullptr){
-            
-    //     }
-    // }
+    bool isEqual(int index1,int index2)
+    {
+        return str[index1] == str[index2];
+    }
+
+    void dfs(SuffixTreeNode* node)
+    {
+        if(node->suffixID > -1)
+        {
+            cout<< node->suffixID <<" ";
+        }
+        if(node->children->isEmpty())
+        {
+            return;
+        }
+        else
+        {
+            LinkedListNode* current= node->children->getHead();
+            while(current != nullptr)
+            {
+                dfs(&current->key);
+                current=current->next;
+            }
+        }
+    }
+    void search(char subString[])
+    {
+        LinkedListNode* currentChild = root->children->getHead();
+        int currentIndex=0;
+        while(currentChild!= nullptr)
+        {
+            if(str[currentChild->key.startIndex]== subString[currentIndex])
+            {
+                int minIndex=currentChild->key.children->getMinIndex();
+                if(minIndex==-1)
+                {
+                    minIndex= strlen(str) ;
+                }
+                for(int i = currentChild->key.startIndex; i < minIndex && currentIndex < strlen(subString);i++, currentIndex++)
+                {
+                    if(str[i]!= subString[currentIndex])
+                    {
+                        cout<<"Not Found"<<endl;
+                        return;
+                    }
+                }
+                if(currentIndex == strlen(subString))
+                {
+                    dfs(&currentChild->key);
+                    return;
+                }
+                else
+                {
+                    currentChild=currentChild->key.children->getHead();
+                }
+            }
+            else
+            {
+                currentChild = currentChild->next;
+            }
+        }
+        cout<<"Not Found\n";
+    }
+    void print(int start,int end)
+    {
+        for(int i = start; i < end; i++)
+        {
+            cout<< str[i];
+        }
+        cout<< '\n';
+    }
 };
 
-//int main() {
-//    char str[] = "bab$";
-//    SuffixTree s = SuffixTree(str);
+//int main()
+//{
+//    char s[] = "bananabanaba$";
+//    SuffixTree t = SuffixTree(s);
+////    t.dfs(t.root);
+//    t.search("ab");
 //}
