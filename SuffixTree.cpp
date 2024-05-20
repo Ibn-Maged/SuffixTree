@@ -49,11 +49,12 @@ public:
     {
         return head->next == nullptr;
     }
+    // returns the first element in the linked list
     LinkedListNode* getHead()
     {
         return head->next;
     }
-
+    // returns the minimum start index in the linked list
     int getMinIndex()
     {
         if(isEmpty())
@@ -62,7 +63,7 @@ public:
         }
         else
         {
-            LinkedListNode* current=head->next;
+            LinkedListNode* current = head->next;
             int min=INT_MAX;
             while(current!= nullptr)
             {
@@ -84,13 +85,16 @@ public:
     SuffixTreeNode* root = new SuffixTreeNode;
     SuffixTree(char str[])
     {
+        // creating the root node
         SuffixTreeNode* node;
         root->startIndex = -1;
         root->suffixID = -1;
         root->children = new LinkedList;
         this->str = str;
+        // insert all the suffixes in the tree starting from suffix 0 to suffix n - 1
         for(int i = 0; i < strlen(str); i++)
         {
+            // create a node for each suffix
             node = new SuffixTreeNode();
             node->startIndex = i;
             node->suffixID=i;
@@ -98,8 +102,12 @@ public:
             insert(root,node);
         }
     }
-    void insert(SuffixTreeNode* currentNode,SuffixTreeNode* newSuffix)
+    // recursive function to insert each suffix in the tree
+    // currentNode is the node we are currently checking to insert in
+    // newSuffix is the node to be inserted
+    void insert(SuffixTreeNode* currentNode, SuffixTreeNode* newSuffix)
     {
+        // if the currentNode does not have any child we just insert the newSuffix
         if(currentNode->children->isEmpty())
         {
             currentNode->children->insert(new LinkedListNode(*newSuffix));
@@ -107,17 +115,26 @@ public:
         else
         {
             LinkedListNode* currentChild = currentNode->children->getHead();
-            while(currentChild!= nullptr)
+            // iterating over all the children in the currentNode
+            while(currentChild != nullptr)
             {
+                // check if the first character in the currentChild equals the first in the newSuffix
                 if(isEqual(currentChild->key.startIndex, newSuffix->startIndex))
                 {
+                    // get the minimum index in currentChild's Linked list to get the substring on this node
                     int minIndex=currentChild->key.children->getMinIndex();
+                    // if minIndex equals -1 then this substring goes until the end of the original string
                     if(minIndex==-1)
                     {
                         minIndex= strlen(str) ;
                     }
-                    for(int i = currentChild->key.startIndex,j=newSuffix->startIndex; i < minIndex;i++,j++)
+                    int i = currentChild->key.startIndex;
+                    int j = newSuffix->startIndex;
+                    // iterate over the substring to check
+                    // if the currentChild is fully equal till minIndex to the newSuffix or partially equal
+                    while(i < minIndex)
                     {
+                        // if not fully equal we call function split
                         if(!isEqual(i,j))
                         {
                             newSuffix->startIndex=j;
@@ -126,9 +143,14 @@ public:
                         }
                         else
                         {
+                            // increment the start index of the newSuffix if the current characters are equal
                             newSuffix->startIndex++;
                         }
+                        i++;
+                        j++;
                     }
+                    // currentChild is fully equal newSuffix till minIndex
+                    // call insert recursively on the currentChild to check his children
                     insert(&currentChild->key,newSuffix);
                     return;
                 }
@@ -137,14 +159,20 @@ public:
                     currentChild = currentChild->next;
                 }
             }
+            // the new suffix starts with a new distinct character
+            // insert it as a child to the currentNode
             currentNode->children->insert(new LinkedListNode(*newSuffix));
         }
     }
-    void split(LinkedListNode* current,LinkedListNode* newNode,int subNodeStartIndex)
+    void split(LinkedListNode* current, LinkedListNode* newNode ,int subNodeStartIndex)
     {
-        SuffixTreeNode currentSub=SuffixTreeNode();
-        currentSub.children=current->key.children;
-        currentSub.startIndex=subNodeStartIndex;
+        // create a new node to contain the rest of the string
+        SuffixTreeNode currentSub = SuffixTreeNode();
+        // move the children of the parent node to the subNode
+        currentSub.children = current->key.children;
+        // currentSub's start index is the index where we called split
+        currentSub.startIndex = subNodeStartIndex;
+        // check if currentSub is internal node or not
         if(currentSub.children->isEmpty())
         {
             currentSub.suffixID=current->key.suffixID;
@@ -153,7 +181,9 @@ public:
         {
             currentSub.suffixID = -1;
         }
+        //make the current child internal node
         current->key.suffixID=-1;
+        //put the two node currentSub and new suffix in children of current child
         current->key.children= new LinkedList();
         current->key.children->insert(newNode);
         current->key.children->insert(new LinkedListNode(currentSub));
@@ -187,31 +217,45 @@ public:
     void search(char subString[])
     {
         LinkedListNode* currentChild = root->children->getHead();
+        //currentIndex visited indices in substring
         int currentIndex=0;
+        //iterate over children starting from root
         while(currentChild!= nullptr)
         {
-            if(str[currentChild->key.startIndex]== subString[currentIndex])
+            //check first char of current child with last visited index in substring
+            if(str[currentChild->key.startIndex] == subString[currentIndex])
             {
-                int minIndex=currentChild->key.children->getMinIndex();
+                // get the minimum index in currentChild's Linked list to get the substring on this node
+                int minIndex = currentChild->key.children->getMinIndex();
+                // if minIndex equals -1 then this substring goes until the end of the original string
                 if(minIndex==-1)
                 {
                     minIndex= strlen(str) ;
                 }
-                for(int i = currentChild->key.startIndex; i < minIndex && currentIndex < strlen(subString);i++, currentIndex++)
+                // iterate over the substring to check
+                // if the currentChild is fully equal till minIndex to the newSuffix or partially equal
+                for(int i = currentChild->key.startIndex; i < minIndex;i++)
                 {
+                    // if reached end of substring break
+                    if(currentIndex == strlen(subString)) break;
+                    // if not fully equal till minIndex then not found
                     if(str[i]!= subString[currentIndex])
                     {
                         cout<<"Not Found"<<endl;
                         return;
                     }
+                    currentIndex++;
                 }
+                //if reached end of substring the result will be the subtree of current node
                 if(currentIndex == strlen(subString))
                 {
                     dfs(&currentChild->key);
+                    cout << '\n';
                     return;
                 }
                 else
                 {
+                    //substring fully equal till minIndex but still did not reach its end so result maybe in children of currentChild
                     currentChild=currentChild->key.children->getHead();
                 }
             }
@@ -220,22 +264,7 @@ public:
                 currentChild = currentChild->next;
             }
         }
+        //no children start with the char in substring in index currentIndex
         cout<<"Not Found\n";
     }
-    void print(int start,int end)
-    {
-        for(int i = start; i < end; i++)
-        {
-            cout<< str[i];
-        }
-        cout<< '\n';
-    }
 };
-
-//int main()
-//{
-//    char s[] = "bananabanaba$";
-//    SuffixTree t = SuffixTree(s);
-////    t.dfs(t.root);
-//    t.search("ab");
-//}
